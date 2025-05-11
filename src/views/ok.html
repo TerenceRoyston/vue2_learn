@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Map Gallery Iframe Embed</title>
+    <!-- 引入 Element UI 样式 -->
+    <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
+    <!-- 引入 Element UI 的 js 文件 -->
+    <script src="https://unpkg.com/vue@2"></script>
+    <script src="https://unpkg.com/element-ui/lib/index.js"></script>
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            background-color: #f5f7fa;
+            font-family: Arial, sans-serif;
+        }
+
+        #app {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            padding: 16px;
+            box-sizing: border-box;
+        }
+
+        .query-group {
+            display: flex;
+            align-items: center;
+            margin-bottom: 16px;
+            background: #ffffff;
+            padding: 12px;
+            border-radius: 4px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+        }
+
+        .query-group > * {
+            margin-right: 12px;
+        }
+
+        .query-group label {
+            white-space: nowrap;
+            font-weight: bold;
+        }
+
+        .query-group .el-select,
+        .query-group .el-date-editor,
+        .query-group .el-input {
+            width: auto;
+        }
+
+        /* 新增：iframe 区域占满剩余空间 */
+        .iframe-container {
+            flex: 1;
+            overflow: hidden;
+            border: none;
+            border-radius: 4px;
+            background-color: #ffffff;
+        }
+
+        .iframe-container iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+    </style>
+</head>
+<body>
+<div id="app">
+    <!-- 第一组查询条件 -->
+    <div class="query-group">
+        <label>ProductFamily：</label>
+        <el-select v-model="productFamilies" multiple placeholder="请选择" size="small">
+            <el-option
+                    v-for="item in productOptions"
+                    :key="item.value"
+                    :label="item.label"
+                    :value="item.value">
+            </el-option>
+        </el-select>
+
+        <label>From：</label>
+        <el-date-picker
+                v-model="startTime"
+                type="datetime"
+                placeholder="选择日期时间"
+                value-format="timestamp"
+                size="small">
+        </el-date-picker>
+
+        <label>To：</label>
+        <el-date-picker
+                v-model="endTime"
+                type="datetime"
+                placeholder="选择日期时间"
+                value-format="timestamp"
+                size="small">
+        </el-date-picker>
+
+        <el-button type="primary" @click="generateUrl('first')" size="small">Query</el-button>
+    </div>
+
+    <!-- 第二组查询条件 -->
+    <div class="query-group">
+        <label>Lot ID：</label>
+        <el-input v-model="lotId" placeholder="请输入 Lot ID" size="small"></el-input>
+        <el-button type="primary" @click="generateUrl('second')" size="small">Query</el-button>
+    </div>
+
+    <!-- iframe 区域自动撑满剩下的空间 -->
+    <div v-if="iframeUrl" class="iframe-container">
+        <iframe :src="iframeUrl"></iframe>
+    </div>
+</div>
+
+<script>
+    new Vue({
+        el: '#app',
+        data() {
+            return {
+                productFamilies: [],
+                startTime: null,
+                endTime: null,
+                lotId: '',
+                productOptions: [
+                    { label: 'L90DM05A', value: 'L90DM05A' },
+                    { label: 'C90WA17A', value: 'C90WA17A' },
+                    { label: 'C55WA04F', value: 'C55WA04F' },
+                ],
+                iframeUrl: ''
+            };
+        },
+        methods: {
+            generateUrl(queryType) {
+                let baseUrl = 'http://10.52.250.97:9005/?from=jump&timeBy=2&showFilter=0&dataType=CP';
+                const params = new URLSearchParams();
+
+                if (queryType === 'first') {
+                    // 第一组查询条件
+                    if (this.productFamilies.length > 0) {
+                        this.productFamilies.forEach(val => {
+                            params.append('ProductFamily', val);
+                        });
+                    }
+
+                    if (this.startTime) {
+                        params.append('startTime', this.startTime);
+                    }
+
+                    if (this.endTime) {
+                        params.append('endTime', this.endTime);
+                    }
+                } else if (queryType === 'second') {
+                    // 第二组查询条件
+                    if (this.lotId) {
+                        params.append('LotID', this.lotId);
+                    }
+                }
+
+                this.iframeUrl = `${baseUrl}&${params.toString()}`;
+            }
+        }
+    });
+</script>
+</body>
+</html>
